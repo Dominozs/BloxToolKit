@@ -63,7 +63,7 @@ Tests run headlessly with [Lune](https://github.com/lune-org/lune) - no Studio n
 lune run tests/run.luau
 ```
 
-The spec files in `tests/` are written for [TestEZ](https://github.com/TestEZ/TestEZ) and run unmodified inside Studio too: place `tests/` under your test hierarchy and run discovery there.
+The spec files in `tests/` are written for [TestEZ](https://github.com/Roblox/testez) and run unmodified inside Studio too: place `tests/` under your test hierarchy and run discovery there.
 
 ## Development
 
@@ -77,16 +77,6 @@ lune run tests/run.luau
 ```
 
 CI runs lint, format check and tests on every push and pull request.
-
-## Roadmap
-
-- [x] Add Signal module
-- [x] Add Cleaner module
-- [x] Add RateLimiter module
-- [x] Add DataStoreHelper module
-- [x] Add automated tests in CI
-- [x] Publish expanded API documentation
-- [ ] Add DataStoreHelper profile/session-lock helper on top of the retry wrapper
 
 ## Contributing
 

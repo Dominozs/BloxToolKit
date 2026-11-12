@@ -2,6 +2,28 @@
 
 Thanks for considering a contribution to RbxToolkit!
 
+## Setup
+
+Tools are pinned in `rokit.toml`. With [rokit](https://github.com/rojo-rbx/rokit) installed:
+
+```sh
+rokit install
+```
+
+That gives you `lune`, `selene` and `stylua` at the versions CI uses.
+
+## Local checks
+
+Run all three before opening a pull request:
+
+```sh
+selene src tests examples
+stylua --check src tests examples
+lune run tests/run.luau
+```
+
+Tests run headlessly through `tests/run.luau` (a TestEZ-compatible harness) and also run unmodified in Studio.
+
 ## Before opening an issue
 
 - Check whether a similar issue already exists.

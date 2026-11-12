@@ -1,0 +1,6 @@
+# Tool versions used by CI (.github/workflows/ci.yml) and local development.
+# Install with: rokit install  (https://github.com/rojo-rbx/rokit)
+[tools]
+lune = "lune-org/lune@0.10.5"
+selene = "Kampfkarren/selene@0.31.0"
+stylua = "JohnnyMorganz/StyLua@2.5.2"

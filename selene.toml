@@ -1,0 +1,9 @@
+std = "roblox+testez"
+
+exclude = ["tests/run.luau"]
+
+[rules]
+empty_if = "deny"
+multiple_statements = "deny"
+shadowing = "warn"
+unused_variable = "warn"

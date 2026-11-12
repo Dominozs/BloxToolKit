@@ -94,7 +94,7 @@ function DataStoreHelper.new(store: any, options: Options?): DataStoreHelper
 		assert(typeof(store[method]) == "function", ("store is missing %s"):format(method))
 	end
 
-	local config = options or {}
+	local config: Options = options or {}
 	local attempts = config.attempts or DEFAULT_ATTEMPTS
 	local baseDelay = config.baseDelay or DEFAULT_BASE_DELAY
 	local maxDelay = config.maxDelay or DEFAULT_MAX_DELAY
@@ -122,6 +122,8 @@ end
 
 -- Runs `operation` with retries. Returns `success, result, err`.
 function DataStoreHelper:_retry(operation: () -> any): (boolean, any?, string?)
+	assertAlive(self)
+
 	local lastError = "unknown error"
 
 	for attempt = 1, self.__attempts do

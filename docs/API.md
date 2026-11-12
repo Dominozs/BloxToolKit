@@ -40,6 +40,14 @@ Removes the cooldown for one key.
 
 Removes all cooldown entries.
 
+### `manager:Sweep() -> number`
+
+Drops entries whose cooldown has already expired. Entries are otherwise only removed when checked, so keys that are never checked again stay in the table. Call this periodically when keys come and go (for example every few minutes). Returns how many entries were dropped.
+
+### `manager:GetCount() -> number`
+
+Returns how many keys currently hold an entry, expired or not.
+
 ### `manager:Destroy()`
 
 Clears the manager and marks it as destroyed. Calling other methods after destruction raises an error.
@@ -104,9 +112,11 @@ Supported items:
 | table with `Disconnect` | `:Disconnect()` |
 | table with `Destroy` | `:Destroy()` |
 
-### `Cleaner.new()`
+### `Cleaner.new(options?)`
 
 Creates and returns a new cleaner.
+
+`options.onError` (optional) receives one message per failing item during `Clean()`. It defaults to `warn`, because `Clean()` is usually called from a Roblox event handler where a thrown error would be silently swallowed. Pass a function that raises if you want failures to propagate.
 
 ### `cleaner:Add(item)`
 
@@ -122,7 +132,7 @@ Removes an item without cleaning it. Returns whether it was found.
 
 ### `cleaner:Clean()`
 
-Cleans every item in reverse order and empties the cleaner. The cleaner stays usable. If an item fails to clean, the remaining items are still cleaned, then the collected errors are raised together.
+Cleans every item in reverse order and empties the cleaner. The cleaner stays usable. If an item fails, remaining items are still cleaned and the failure is reported through `onError` instead of stopping the caller.
 
 ### `cleaner:GetCount() -> number`
 
@@ -167,6 +177,14 @@ Refills one key's bucket to full.
 ### `limiter:Clear()`
 
 Drops every key's bucket.
+
+### `limiter:Sweep() -> number`
+
+Drops buckets that are full, bounding memory when keys come and go. A full bucket is exactly what a fresh key starts with, so sweeping it cannot change behaviour. Call this periodically when keys are short-lived. Returns how many buckets were dropped.
+
+### `limiter:GetCount() -> number`
+
+Returns how many keys currently hold a bucket.
 
 ### `limiter:IsDestroyed() -> boolean`
 

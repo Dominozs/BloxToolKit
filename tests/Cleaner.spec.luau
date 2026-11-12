@@ -125,19 +125,41 @@ return function()
 
 		it("keeps cleaning after one item fails", function()
 			local cleaned = false
+			local reported = {}
+			local failingCleaner = Cleaner.new({
+				onError = function(message: string)
+					table.insert(reported, message)
+				end,
+			})
 
-			cleaner:Add(function()
+			failingCleaner:Add(function()
 				cleaned = true
 			end)
-			cleaner:Add(function()
+			failingCleaner:Add(function()
 				error("boom")
 			end)
 
-			expect(function()
-				cleaner:Clean()
-			end).to.throw()
+			failingCleaner:Clean()
 
 			expect(cleaned).to.equal(true)
+			expect(#reported).to.equal(1)
+			expect(failingCleaner:GetCount()).to.equal(0)
+		end)
+
+		it("reports a table without Disconnect or Destroy", function()
+			local reported = {}
+			local bareCleaner = Cleaner.new({
+				onError = function(message: string)
+					table.insert(reported, message)
+				end,
+			})
+
+			bareCleaner:Add({})
+
+			bareCleaner:Clean()
+
+			expect(#reported).to.equal(1)
+			expect(bareCleaner:GetCount()).to.equal(0)
 		end)
 
 		it("can be reused after Clean", function()
@@ -159,14 +181,6 @@ return function()
 		it("rejects nil items", function()
 			expect(function()
 				cleaner:Add(nil)
-			end).to.throw()
-		end)
-
-		it("rejects tables with neither Disconnect nor Destroy", function()
-			cleaner:Add({})
-
-			expect(function()
-				cleaner:Clean()
 			end).to.throw()
 		end)
 

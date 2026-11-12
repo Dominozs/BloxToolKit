@@ -107,6 +107,40 @@ function Cooldown:Clear()
 	table.clear(self._expiresAt)
 end
 
+-- Drops entries whose cooldown has already expired.
+--
+-- Entries are cleaned lazily when checked, so keys that are never checked again
+-- stay in the table forever. Call this periodically (for example on
+-- `PlayerRemoving`, or every few minutes) when keys come and go.
+-- Returns how many entries were dropped.
+function Cooldown:Sweep(): number
+	assertAlive(self)
+
+	local now = self._clock()
+	local dropped = 0
+
+	for key, expiresAt in self._expiresAt do
+		if now >= expiresAt then
+			self._expiresAt[key] = nil
+			dropped += 1
+		end
+	end
+
+	return dropped
+end
+
+-- Returns how many keys currently hold an entry, expired or not.
+function Cooldown:GetCount(): number
+	assertAlive(self)
+
+	local count = 0
+	for _ in self._expiresAt do
+		count += 1
+	end
+
+	return count
+end
+
 -- Clears the manager and prevents further use.
 function Cooldown:Destroy()
 	if self._destroyed then

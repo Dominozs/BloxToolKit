@@ -30,6 +30,10 @@ Cleaner.__index = Cleaner
 
 export type CleanerItem = (() -> ()) | thread | Instance | { Destroy: (any) -> () } | { Disconnect: (any) -> () }
 
+export type Options = {
+	onError: ((message: string) -> ())?,
+}
+
 export type Cleaner = {
 	Add: (self: Cleaner, CleanerItem) -> (),
 	AddMany: (self: Cleaner, { CleanerItem }) -> (),
@@ -44,11 +48,25 @@ local function assertAlive(self: any)
 	assert(not self.__destroyed, "Cleaner has been destroyed")
 end
 
-function Cleaner.new(): Cleaner
-	return (setmetatable({
-		__items = {},
-		__destroyed = false,
-	}, Cleaner) :: any) :: Cleaner
+local function defaultOnError(message: string)
+	warn(message)
+end
+
+-- `onError` receives one message per failing item. The default reports through
+-- `warn`, because `Clean` is usually called from a Roblox event handler where a
+-- thrown error would be swallowed. Pass a function that errors if you want
+-- failures to propagate.
+function Cleaner.new(options: Options?): Cleaner
+	local config: Options = options or {}
+	assert(config.onError == nil or typeof(config.onError) == "function", "onError must be a function")
+
+	return (
+		setmetatable({
+			__items = {},
+			__onError = config.onError or defaultOnError,
+			__destroyed = false,
+		}, Cleaner) :: any
+	) :: Cleaner
 end
 
 local function cleanItem(item: any)
@@ -105,23 +123,20 @@ function Cleaner:Remove(item: CleanerItem): boolean
 	return false
 end
 
--- Cleans every item in reverse order and empties the cleaner.
+-- Cleans every item in reverse order and empties the cleaner. The cleaner stays
+-- usable. If an item fails, remaining items are still cleaned and the failure
+-- is reported through `onError` instead of stopping the caller.
 function Cleaner:Clean()
 	assertAlive(self)
 
-	local errors: { string } = {}
 	local items = self.__items
 	self.__items = {}
 
 	for index = #items, 1, -1 do
-		local ok, err = pcall(cleanItem, items[index])
-		if not ok then
-			table.insert(errors, tostring(err))
+		local results = table.pack(pcall(cleanItem, items[index]))
+		if not results[1] then
+			self.__onError(("Cleaner item failed: %s"):format(tostring(results[2])))
 		end
-	end
-
-	if #errors > 0 then
-		error(("Cleaner failed on %d item(s):\n%s"):format(#errors, table.concat(errors, "\n")), 0)
 	end
 end
 

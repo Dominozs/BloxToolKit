@@ -145,5 +145,31 @@ return function()
 				limiter:Consume("player")
 			end).to.throw()
 		end)
+
+		it("counts buckets", function()
+			limiter:Consume("a")
+			limiter:Consume("b")
+
+			expect(limiter:GetCount()).to.equal(2)
+			limiter:Clear()
+			expect(limiter:GetCount()).to.equal(0)
+		end)
+
+		it("sweeps full buckets", function()
+			for _ = 1, 4 do
+				limiter:Consume("full")
+			end
+
+			now = 2 -- fully refills "full" (rate 2/s, burst 4)
+			limiter:Consume("active")
+
+			expect(limiter:Sweep()).to.equal(1)
+			expect(limiter:GetCount()).to.equal(1)
+			expect(limiter:Peek("full")).to.equal(4)
+
+			-- A full bucket swept away is indistinguishable from a fresh one.
+			limiter:Consume("full")
+			expect(limiter:Peek("full")).to.equal(3)
+		end)
 	end)
 end

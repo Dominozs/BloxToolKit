@@ -117,7 +117,7 @@ end
 function Signal.Fire(self: any, ...: any)
 	assertAlive(self)
 	local args = table.pack(...)
-	local snapshot = table.clone(self.__entries)
+	local snapshot: { Entry } = table.clone(self.__entries)
 
 	for _, entry in snapshot do
 		if not entry.connection.Connected then
@@ -128,9 +128,9 @@ function Signal.Fire(self: any, ...: any)
 			entry.connection:Disconnect()
 		end
 
-		local ok, err = pcall(entry.callback, table.unpack(args, 1, args.n))
-		if not ok then
-			self.__logError(("Signal handler error: %s"):format(tostring(err)))
+		local results = table.pack(pcall(entry.callback, table.unpack(args, 1, args.n)))
+		if not results[1] then
+			self.__logError(("Signal handler error: %s"):format(tostring(results[2])))
 		end
 	end
 end

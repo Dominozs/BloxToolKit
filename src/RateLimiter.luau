@@ -26,6 +26,8 @@ export type RateLimiter = {
 	GetRetryTime: (self: RateLimiter, key: any, cost: number?) -> number,
 	Reset: (self: RateLimiter, key: any) -> (),
 	Clear: (self: RateLimiter) -> (),
+	Sweep: (self: RateLimiter) -> number,
+	GetCount: (self: RateLimiter) -> number,
 	IsDestroyed: (self: RateLimiter) -> boolean,
 	Destroy: (self: RateLimiter) -> (),
 }
@@ -133,6 +135,37 @@ function RateLimiter:Reset(key: any)
 	assert(key ~= nil, "key cannot be nil")
 
 	self.__buckets[key] = nil
+end
+
+-- Drops full or expired buckets to bound memory when keys come and go.
+--
+-- A bucket is dropped when it is full, since a full bucket is exactly what a new
+-- key would start with. Call this periodically, or on `PlayerRemoving`.
+-- Returns how many buckets were dropped.
+function RateLimiter:Sweep(): number
+	assertAlive(self)
+
+	local dropped = 0
+	for key in self.__buckets do
+		if refill(self, key).tokens >= self.__burst then
+			self.__buckets[key] = nil
+			dropped += 1
+		end
+	end
+
+	return dropped
+end
+
+-- Returns how many keys currently hold a bucket.
+function RateLimiter:GetCount(): number
+	assertAlive(self)
+
+	local count = 0
+	for _ in self.__buckets do
+		count += 1
+	end
+
+	return count
 end
 
 -- Drops every key's bucket.

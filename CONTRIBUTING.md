@@ -10,7 +10,7 @@ Tools are pinned in `rokit.toml`. With [rokit](https://github.com/rojo-rbx/rokit
 rokit install
 ```
 
-That gives you `lune`, `selene` and `stylua` at the versions CI uses.
+That gives you `lune`, `selene`, `stylua` and `luau-lsp` at the versions CI uses.
 
 ## Local checks
 
@@ -19,6 +19,7 @@ Run all three before opening a pull request:
 ```sh
 selene src tests examples
 stylua --check src tests examples
+luau-lsp analyze --definitions=roblox.d.luau src   # optional; CI does this
 lune run tests/run.luau
 ```
 

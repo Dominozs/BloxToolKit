@@ -70,9 +70,10 @@ The spec files in `tests/` are written for [TestEZ](https://github.com/Roblox/te
 Tools are pinned in `rokit.toml`. With [rokit](https://github.com/rojo-rbx/rokit) installed:
 
 ```sh
-rokit install   # installs lune, selene, stylua at the pinned versions
+rokit install   # installs lune, selene, stylua and luau-lsp at the pinned versions
 selene src tests examples
 stylua --check src tests examples
+luau-lsp analyze --definitions=roblox.d.luau src  # optional; CI does this
 lune run tests/run.luau
 ```
 
@@ -85,3 +86,7 @@ Contributions, bug reports, and suggestions are welcome. Please read [CONTRIBUTI
 ## License
 
 MIT. See [LICENSE](LICENSE).
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md).

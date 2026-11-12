@@ -79,5 +79,31 @@ return function()
 				cooldown:Use("player-1", 1)
 			end).to.throw()
 		end)
+
+		it("counts entries", function()
+			cooldown:Use("player-1", 10)
+			cooldown:Use("player-2", 10)
+
+			expect(cooldown:GetCount()).to.equal(2)
+			cooldown:Clear()
+			expect(cooldown:GetCount()).to.equal(0)
+		end)
+
+		it("sweeps expired entries", function()
+			local now = 0
+			local timed = Cooldown.new(function()
+				return now
+			end)
+
+			timed:Use("gone", 5)
+			timed:Use("kept", 50)
+
+			now = 10
+			expect(timed:Sweep()).to.equal(1)
+			expect(timed:GetCount()).to.equal(1)
+			expect(timed:IsReady("kept")).to.equal(false)
+			expect(timed:IsReady("gone")).to.equal(true)
+			timed:Destroy()
+		end)
 	end)
 end

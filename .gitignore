@@ -12,6 +12,7 @@ Desktop.ini
 *.rbxm
 *.rbxmx
 sourcemap.json
+.tmpdefs/
 
 # Scratch work
 scratch/

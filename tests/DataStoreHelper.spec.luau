@@ -3,7 +3,7 @@ return function()
 	local DataStoreHelper = require(game.ReplicatedStorage.RbxToolkit.DataStoreHelper)
 
 	-- A fake DataStore: records calls and replays scripted failures.
-	local function newFakeStore()
+	local function newFakeStore(robloxType: string?)
 		local store = {
 			data = {} :: { [string]: any },
 			calls = {} :: { string },
@@ -11,6 +11,10 @@ return function()
 			failureMessage = "DataStore request failed",
 			transformError = nil :: string?,
 		}
+
+		if robloxType ~= nil then
+			rawset(store, "__robloxType", robloxType)
+		end
 
 		local function record(method: string)
 			table.insert(store.calls, method)
@@ -98,6 +102,15 @@ return function()
 			expect(function()
 				DataStoreHelper.new({})
 			end).to.throw()
+		end)
+
+		it("accepts a Roblox DataStore instance", function()
+			local realLike = newFakeStore("Instance")
+			local robloxHelper = DataStoreHelper.new(realLike :: any, { wait = noWait, logger = noLog })
+
+			expect(robloxHelper:Set("player-1", 7)).to.equal(true)
+			expect(realLike.data["player-1"]).to.equal(7)
+			robloxHelper:Destroy()
 		end)
 
 		it("reads a value", function()

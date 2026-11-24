@@ -70,13 +70,17 @@ function Cleaner.new(options: Options?): Cleaner
 end
 
 local function cleanItem(item: any)
-	if typeof(item) == "function" then
+	local kind = typeof(item)
+
+	if kind == "function" then
 		item()
-	elseif typeof(item) == "thread" then
+	elseif kind == "thread" then
 		coroutine.close(item)
-	elseif typeof(item) == "Instance" then
+	elseif kind == "RBXScriptConnection" then
+		item:Disconnect()
+	elseif kind == "Instance" then
 		item:Destroy()
-	elseif typeof(item) == "table" then
+	elseif kind == "table" then
 		local disconnect = item.Disconnect
 		if typeof(disconnect) == "function" then
 			disconnect(item)
@@ -87,7 +91,7 @@ local function cleanItem(item: any)
 		assert(typeof(destroy) == "function", "table item must provide :Disconnect() or :Destroy()")
 		destroy(item)
 	else
-		error(("cannot clean item of type %s"):format(typeof(item)), 3)
+		error(("cannot clean item of type %s"):format(kind), 3)
 	end
 end
 

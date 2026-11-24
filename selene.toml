@@ -1,6 +1,6 @@
 std = "roblox+testez"
 
-exclude = ["tests/run.luau"]
+exclude = ["tests/run.luau", "tests/run_roblox_runtime.luau"]
 
 [rules]
 empty_if = "deny"

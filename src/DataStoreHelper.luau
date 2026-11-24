@@ -88,7 +88,10 @@ local function assertAlive(self: any)
 end
 
 function DataStoreHelper.new(store: any, options: Options?): DataStoreHelper
-	assert(typeof(store) == "table", "store must be a DataStore instance")
+	-- Roblox DataStores are Instances, so `typeof(store)` is "Instance"; a plain
+	-- table is accepted for tests and alternative backends with the same methods.
+	local kind = typeof(store)
+	assert(kind == "Instance" or kind == "table", "store must be a DataStore instance")
 
 	for _, method in { "GetAsync", "SetAsync", "UpdateAsync", "RemoveAsync", "IncrementAsync" } do
 		assert(typeof(store[method]) == "function", ("store is missing %s"):format(method))

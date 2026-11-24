@@ -205,5 +205,20 @@ return function()
 
 			expect(calls).to.equal(1)
 		end)
+
+		it("disconnects a Roblox RBXScriptConnection", function()
+			local disconnected = false
+			local connection = {
+				__robloxType = "RBXScriptConnection",
+				Disconnect = function()
+					disconnected = true
+				end,
+			}
+
+			cleaner:Add(connection :: any)
+			cleaner:Clean()
+
+			expect(disconnected).to.equal(true)
+		end)
 	end)
 end

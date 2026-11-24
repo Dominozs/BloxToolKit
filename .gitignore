@@ -17,3 +17,6 @@ sourcemap.json
 # Scratch work
 scratch/
 *.probe.luau
+
+# scratch backups
+.tmp/

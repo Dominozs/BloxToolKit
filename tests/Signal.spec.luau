@@ -184,5 +184,76 @@ return function()
 				signal:Connect(5)
 			end).to.throw()
 		end)
+
+		it("returns the arguments the signal was fired with", function()
+			local received
+			local thread = coroutine.create(function()
+				received = { signal:Wait() }
+			end)
+
+			coroutine.resume(thread)
+			expect(coroutine.status(thread)).to.equal("suspended")
+
+			signal:Fire("one", "two")
+
+			expect(coroutine.status(thread)).to.equal("dead")
+			expect(#received).to.equal(2)
+			expect(received[1]).to.equal("one")
+			expect(received[2]).to.equal("two")
+		end)
+
+		it("resumes the waiting coroutine exactly once", function()
+			local resumes = 0
+			local thread = coroutine.create(function()
+				signal:Wait()
+				resumes += 1
+			end)
+
+			coroutine.resume(thread)
+			signal:Fire("first")
+
+			expect(resumes).to.equal(1)
+			expect(signal:GetConnectionCount()).to.equal(0)
+		end)
+
+		it("does not error when the signal fires again after the waiter resumed", function()
+			local thread = coroutine.create(function()
+				signal:Wait()
+			end)
+
+			coroutine.resume(thread)
+			signal:Fire("first")
+
+			local ok = pcall(function()
+				signal:Fire("second")
+			end)
+
+			expect(ok).to.equal(true)
+		end)
+
+		it("waits when the signal is fired from another coroutine", function()
+			local received
+			local waiter = coroutine.create(function()
+				received = { signal:Wait() }
+			end)
+			local firer = coroutine.create(function()
+				signal:Fire("async", 42)
+			end)
+
+			coroutine.resume(waiter)
+			coroutine.resume(firer)
+
+			expect(coroutine.status(waiter)).to.equal("dead")
+			expect(received[1]).to.equal("async")
+			expect(received[2]).to.equal(42)
+		end)
+
+		it("refuses to wait after being destroyed", function()
+			signal:Destroy()
+
+			expect(function()
+				signal:Wait()
+			end).to.throw()
+		end)
 	end)
 end

@@ -1,0 +1,36 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+
+      - name: Install toolchain
+        uses: CompeyDev/setup-rokit@v0.2.1
+
+      - name: Lint
+        run: selene src tests examples
+
+      - name: Check formatting
+        run: stylua --check src tests examples
+
+      - name: Run tests
+        run: lune run tests/run.luau
+
+      - name: Build model
+        run: rojo build build.project.json -o RbxToolkit.rbxm
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: RbxToolkit.rbxm
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

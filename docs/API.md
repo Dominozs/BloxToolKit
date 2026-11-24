@@ -84,6 +84,10 @@ Calls every connected handler with the given arguments, in the order they connec
 
 Returns how many handlers are currently connected.
 
+### `signal:Wait() -> ...`
+
+Yields the current coroutine until the signal fires once, then returns the fired arguments. The temporary handler disconnects itself. Requires being inside a coroutine (a thread, not the main script body).
+
 ### `signal:DisconnectAll()`
 
 Detaches every handler. The signal stays usable.
@@ -214,11 +218,15 @@ Creates a wrapper around a Roblox `DataStore` (or anything duck-typed to it).
 | `wait` | `task.wait` | Sleep function between retries. |
 | `isRetryable` | built-in | `(err) -> boolean`; see below. |
 
-The default retryability rule never retries errors mentioning "not found", "does not exist", "not been set" or "invalid key" (case-insensitive) - retrying a missing key only adds latency. Everything else is retried until attempts run out.
+The default retryability rule never retries errors mentioning a missing key (case-insensitive, matched against a fixed list such as "was not found", "does not exist", "invalid key") - retrying a missing key only adds latency. Everything else is retried until attempts run out.
 
 ### `helper:Get(key, default?) -> (boolean, any?, string?)`
 
 Reads a key. On failure with a `default` provided, returns `false, default, err`.
+
+### `helper:GetExisting(key, default) -> (boolean, any, string?)`
+
+Reads a key, treating "key does not exist" as a normal outcome: returns `true, default, nil` for a first-time key. Real errors (budget, network, throttling) still return `false, default, err` after retries. Use this when a missing key is expected and should not be logged as a failure.
 
 ### `helper:GetOrDefault(key, default) -> any`
 
@@ -249,3 +257,54 @@ Returns whether the helper has been destroyed.
 Marks the helper destroyed. Other methods raise afterwards.
 
 Note: the wrapper does not manage DataStore budgets. Retries wait between attempts, which naturally reduces budget pressure, but heavy call sites should still batch reads.
+
+## Net
+
+A server-authoritative wrapper around a `RemoteEvent` or `RemoteFunction`. It validates client calls before they reach game logic, turns a rejected call into a drop instead of a silent success, normalises return values to `(ok, result, err)` instead of throwing, and tracks its own connections so `Destroy` releases them all.
+
+`Net` is deliberately dependency-free so it can be copied on its own. For throttling, pass `RateLimiter` into `validate`:
+
+```lua
+local limiter = RateLimiter.new(10, 20)
+
+net:OnServerEvent(handler, {
+	validate = function(player)
+		return limiter:Consume(player.UserId)
+	end,
+})
+```
+
+### `Net.new(remote)`
+
+`remote` is a `RemoteEvent` or `RemoteFunction` (or a duck-typed table for headless tests). Raises if the object exposes neither remote method set.
+
+### `net:OnServerEvent(handler, options?)`
+
+Registers the server-side handler. `handler` receives `(player, ...)`.
+
+For a `RemoteEvent` this connects to `OnServerEvent` and returns the connection. For a `RemoteFunction` it installs `OnServerInvoke` and returns `nil`.
+
+`options` (all optional):
+
+| Option | Meaning |
+|---|---|
+| `validate` | `(player, ...) -> boolean`. Runs first; returning `false` drops the call. |
+| `onReject` | `(player, ...) -> ()`. Called when `validate` rejects a call. |
+
+### `net:FireServer(...)` / `net:FireClient(player, ...)` / `net:FireAllClients(...)`
+
+Fires without awaiting a reply. `FireServer` and `FireAllClients` are client-side; `FireClient` is server-side. Each raises if the underlying remote does not support that method.
+
+### `net:InvokeServer(...) -> (boolean, any?, string?)`
+
+Client -> server, awaiting a reply. Never throws. Only for `RemoteFunction`.
+
+### `net:InvokeClient(player, ...) -> (boolean, any?, string?)`
+
+Server -> one client, awaiting a reply. Never throws. Only for `RemoteFunction`.
+
+### `net:IsDestroyed() -> boolean`
+
+### `net:Destroy()`
+
+Disconnects every tracked connection, detaches an installed `OnServerInvoke` only if it is still the wrapper's own function (so a later reassignment by other code is not clobbered), and prevents further use. Idempotent.

@@ -30,7 +30,7 @@ return function()
 			record("GetAsync")
 			local value = self.data[key]
 			if value == nil then
-				error(("%s not found"):format(key))
+				error(("Key %s was not found in DataStore"):format(key))
 			end
 			return value
 		end
@@ -113,6 +113,34 @@ return function()
 			robloxHelper:Destroy()
 		end)
 
+		it("treats a missing key as a normal outcome in GetExisting", function()
+			local ok, value, err = helper:GetExisting("missing", "fallback")
+
+			expect(ok).to.equal(true)
+			expect(value).to.equal("fallback")
+			expect(err).to.equal(nil)
+			expect(#store.calls).to.equal(1)
+		end)
+
+		it("returns the stored value from GetExisting", function()
+			store.data["player-1"] = 42
+
+			local ok, value = helper:GetExisting("player-1", "fallback")
+
+			expect(ok).to.equal(true)
+			expect(value).to.equal(42)
+		end)
+
+		it("still reports real failures from GetExisting", function()
+			store.failures.GetAsync = 10
+
+			local ok, value, err = helper:GetExisting("player-1", "fallback")
+
+			expect(ok).to.equal(false)
+			expect(value).to.equal("fallback")
+			expect(err).to.be.a("string")
+		end)
+
 		it("reads a value", function()
 			store.data["player-1"] = 42
 
@@ -129,6 +157,7 @@ return function()
 			expect(ok).to.equal(false)
 			expect(value).to.equal("fallback")
 			expect(err).to.be.a("string")
+			expect(string.find(err:lower(), "was not found", 1, true) ~= nil).to.equal(true)
 		end)
 
 		it("does not retry a missing key", function()
@@ -136,6 +165,15 @@ return function()
 
 			expect(#store.calls).to.equal(1)
 			expect(#waits).to.equal(0)
+		end)
+
+		it("reads from GetExisting when a value was stored", function()
+			store.data["player-1"] = 42
+
+			local ok, value = helper:GetExisting("player-1", "fallback")
+
+			expect(ok).to.equal(true)
+			expect(value).to.equal(42)
 		end)
 
 		it("writes a value", function()

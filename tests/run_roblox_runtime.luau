@@ -117,7 +117,7 @@ local function main(): number
 
 	-- Modules under test get the Roblox `typeof`; spec files run with globals
 	-- from this file (realTypeof + shims) so both sides are exercised.
-	for _, name in { "Signal", "Cleaner", "Cooldown", "RateLimiter", "DataStoreHelper" } do
+	for _, name in { "Signal", "Cleaner", "Cooldown", "RateLimiter", "DataStoreHelper", "Net" } do
 		local module, _env = loadWithRobloxTypeof(name)
 		modules[name] = module
 	end

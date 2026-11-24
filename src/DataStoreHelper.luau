@@ -38,6 +38,7 @@ export type Options = {
 
 export type DataStoreHelper = {
 	Get: (self: DataStoreHelper, key: string, default: any?) -> (boolean, any?, string?),
+	GetExisting: (self: DataStoreHelper, key: string, default: any) -> (boolean, any, string?),
 	GetOrDefault: (self: DataStoreHelper, key: string, default: any) -> any,
 	Set: (self: DataStoreHelper, key: string, value: any) -> (boolean, nil, string?),
 	Update: (self: DataStoreHelper, key: string, transform: (any) -> any) -> (boolean, any?, string?),
@@ -52,12 +53,16 @@ local DEFAULT_BASE_DELAY = 0.5
 local DEFAULT_MAX_DELAY = 8
 local DEFAULT_JITTER = 0.25
 
--- A missing key means `GetAsync` threw; retrying it cannot succeed.
+-- A missing key means `GetAsync` threw; retrying it cannot succeed. Patterns are
+-- matched case-insensitively and kept specific: a broad "not found" substring
+-- would misclassify unrelated errors as non-retryable.
 local NOT_RETRYABLE_PATTERNS = {
-	"not found",
+	"key not found",
+	"was not found",
 	"does not exist",
-	"not been set",
+	"has not been set",
 	"invalid key",
+	"not a valid key",
 }
 
 local function defaultLogger(message: string)
@@ -164,6 +169,35 @@ function DataStoreHelper:Get(key: string, default: any?): (boolean, any?, string
 	end
 
 	return ok, result, err
+end
+
+-- Reads a key, treating "key does not exist" as a normal outcome rather than a
+-- failure: returns `true, default` in that case, so callers do not have to
+-- distinguish a first-time player from a DataStore outage.
+--
+-- Only misses are normalised. Real errors (budget, network, throttling) still
+-- return `false, default, err` after retries.
+function DataStoreHelper:GetExisting(key: string, default: any): (boolean, any, string?)
+	assertAlive(self)
+	assert(typeof(key) == "string" and key ~= "", "key must be a non-empty string")
+
+	local ok, result, err = self:_retry(function()
+		return self.__store:GetAsync(key)
+	end)
+
+	if ok then
+		if result == nil then
+			return true, default, nil
+		end
+
+		return true, result, nil
+	end
+
+	if not self.__isRetryable(err or "") then
+		return true, default, nil
+	end
+
+	return false, default, err
 end
 
 -- Reads a key and always returns a value, falling back to `default`.

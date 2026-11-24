@@ -31,6 +31,7 @@ export type Signal<T...> = {
 	Connect: (self: Signal<T...>, callback: (T...) -> ()) -> Connection,
 	Once: (self: Signal<T...>, callback: (T...) -> ()) -> Connection,
 	Fire: (self: Signal<T...>, T...) -> (),
+	Wait: (self: Signal<T...>) -> T...,
 	GetConnectionCount: (self: Signal<T...>) -> number,
 	DisconnectAll: (self: Signal<T...>) -> (),
 	IsDestroyed: (self: Signal<T...>) -> boolean,
@@ -133,6 +134,23 @@ function Signal.Fire(self: any, ...: any)
 			self.__logError(("Signal handler error: %s"):format(tostring(results[2])))
 		end
 	end
+end
+
+-- Yields the current coroutine until the signal fires once, then returns the
+-- fired arguments. The temporary handler disconnects itself and resumes the
+-- waiting coroutine directly, so no scheduler is required.
+function Signal.Wait(self: any): ...any
+	assertAlive(self)
+
+	local thread = coroutine.running()
+	local connection: Connection = nil :: any
+
+	connection = self:Connect(function(...)
+		connection:Disconnect()
+		coroutine.resume(thread, ...)
+	end)
+
+	return coroutine.yield()
 end
 
 -- Returns how many handlers are currently connected.

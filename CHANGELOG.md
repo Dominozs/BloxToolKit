@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [0.2.0]
 
 ### Added
 
@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `tests/run_roblox_runtime.luau` — second test runner that executes modules with a Roblox-flavoured `typeof`, so engine-specific branches are covered headlessly.
 - Release workflow (`.github/workflows/release.yml`) building `RbxToolkit.rbxm` on `v*` tags via `build.project.json`.
 - `rojo` pinned in `rokit.toml`.
+- `examples/NetExample.server.luau` — demonstrates server-authoritative validation.
 
 ### Changed
 

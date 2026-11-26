@@ -14,16 +14,23 @@ That gives you `lune`, `selene`, `stylua` and `luau-lsp` at the versions CI uses
 
 ## Local checks
 
-Run all three before opening a pull request:
+Run all of these before opening a pull request:
 
 ```sh
 selene src tests examples
 stylua --check src tests examples
-luau-lsp analyze --definitions=roblox.d.luau src   # optional; CI does this
 lune run tests/run.luau
+lune run tests/run_roblox_runtime.luau   # re-runs with a Roblox-flavoured typeof
 ```
 
-Tests run headlessly through `tests/run.luau` (a TestEZ-compatible harness) and also run unmodified in Studio.
+For an optional local type check:
+
+```sh
+curl -fsSL -o roblox.d.luau https://raw.githubusercontent.com/JohnnyMorganz/luau-lsp/1.70.1/scripts/globalTypes.d.luau
+luau-lsp analyze --definitions=roblox.d.luau src
+```
+
+Tests run headlessly through `tests/run.luau` and `tests/run_roblox_runtime.luau` (both TestEZ-compatible) and also run unmodified in Studio.
 
 ## Before opening an issue
 

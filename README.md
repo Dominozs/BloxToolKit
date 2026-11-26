@@ -79,14 +79,21 @@ The spec files in `tests/` are written for [TestEZ](https://github.com/Roblox/te
 Tools are pinned in `rokit.toml`. With [rokit](https://github.com/rojo-rbx/rokit) installed:
 
 ```sh
-rokit install   # installs lune, selene, stylua and luau-lsp at the pinned versions
+rokit install   # installs lune, selene, stylua, luau-lsp and rojo at the pinned versions
 selene src tests examples
 stylua --check src tests examples
-luau-lsp analyze --definitions=roblox.d.luau src  # optional; CI does this
 lune run tests/run.luau
+lune run tests/run_roblox_runtime.luau   # re-runs with a Roblox-flavoured typeof
 ```
 
-CI runs lint, format check and tests on every push and pull request.
+For an optional local type check, download the Roblox definitions once, then:
+
+```sh
+curl -fsSL -o roblox.d.luau https://raw.githubusercontent.com/JohnnyMorganz/luau-lsp/1.70.1/scripts/globalTypes.d.luau
+luau-lsp analyze --definitions=roblox.d.luau src
+```
+
+CI runs lint, format check, type check and tests on every push and pull request.
 
 ## Contributing
 
